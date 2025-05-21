@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Socratic AI – Hiring Assessment Tool MVP
 
-## Getting Started
+A web-based hiring assessment tool that evaluates how candidates think *with* AI. Users interact with a chat interface powered by OpenAI GPT-4, and the system sometimes injects deliberately incorrect (trap) answers. All interactions are logged for later review.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack
+- **Frontend:** Next.js (App Router) + TailwindCSS
+- **Backend:** Next.js API routes
+- **Database:** Supabase (PostgreSQL)
+- **LLM:** OpenAI GPT-4 API
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
+- **/chat:** Chat interface for users to interact with GPT-4
+  - 20% of AI responses are deliberately incorrect (trap answers)
+  - Trap answers are labeled in the UI (for debugging/MVP)
+  - Each user gets a unique session ID (stored in localStorage)
+- **/api/chat:** API route
+  - Receives user messages and context
+  - Calls GPT-4 for a response
+  - Randomly injects a trap answer 20% of the time
+  - Logs every interaction to Supabase: session ID, user message, AI message, trap status, timestamp
+- **/logs:** Admin page
+  - Displays all chat logs in a table (timestamp, session, user/AI message, trap status)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Setup & Installation
 
-To learn more about Next.js, take a look at the following resources:
+1. **Clone the repo and install dependencies:**
+   ```bash
+   npm install
+   # or yarn install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Set up environment variables:**
+   Create a `.env.local` file in the root with:
+   ```env
+   OPENAI_API_KEY=sk-...
+   SUPABASE_URL=your-supabase-url
+   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Set up Supabase:**
+   - Create a project at [supabase.com](https://supabase.com/)
+   - Create a `messages` table with this SQL:
+     ```sql
+     create table public.messages (
+       id uuid primary key default gen_random_uuid(),
+       session_id text not null,
+       user_message text not null,
+       ai_message text not null,
+       is_trap boolean not null,
+       timestamp timestamptz not null default now()
+     );
+     ```
 
-## Deploy on Vercel
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   # or yarn dev
+   ```
+   Open [http://localhost:3000/chat](http://localhost:3000/chat) to use the chat interface.
+   Open [http://localhost:3000/logs](http://localhost:3000/logs) to view chat logs.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Next Steps / Improvements
+- Add authentication for admin log access
+- Improve trap answer generation
+- Add user scoring/feedback
+- Polish UI/UX
+
+---
+
+## License
+MIT
