@@ -21,7 +21,7 @@ const trapAnswers = [
 type OpenAIRole = "system" | "user" | "assistant";
 
 export async function POST(req: NextRequest) {
-  const { message, sessionId, context } = await req.json();
+  const { sessionId, context } = await req.json();
 
   let aiReply = "";
   let isTrap = false;
@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
       content: `You are helping the user solve a problem related to: ${topic}`,
     });
   }
+  if (Array.isArray(context)) {
+    context.forEach((m: any) => {
+      if (m.sender === "user" || m.sender === "ai") {
+        openAIMessages.push({
+          role: m.sender === "user" ? "user" : "assistant",
+          content: m.text,
+        });
+      }
+    });
+  }
 
   // 1. Call OpenAI
   try {
@@ -65,10 +75,11 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Log to Supabase (non-blocking)
+  const latestUserMsg = Array.isArray(context) && context.length > 0 ? context[context.length - 1].text : "";
   supabase.from("messages").insert([
     {
       session_id: sessionId,
-      user_message: message,
+      user_message: latestUserMsg,
       ai_message: aiReply,
       is_trap: isTrap,
       timestamp: new Date().toISOString(),
